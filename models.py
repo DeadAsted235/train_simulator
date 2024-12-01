@@ -29,8 +29,7 @@ class Train(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     train_name = Column(String, unique=True, index=True)
     total_seats = Column(Integer)
-    departure_station = Column(Integer, ForeignKey(Station.id))
-    arrival_station = Column(Integer, ForeignKey(Station.id))
+
 
 
 class Ticket(Base):
