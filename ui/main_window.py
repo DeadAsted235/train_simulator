@@ -1,12 +1,13 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QTableWidget,
-                           QTableWidgetItem, QDialog, QFormLayout, QLineEdit,
-                           QDateTimeEdit, QMessageBox, QHBoxLayout, QHeaderView,
-                           QDialogButtonBox)
+                             QTableWidgetItem, QDialog, QFormLayout, QLineEdit,
+                             QDateTimeEdit, QMessageBox, QHBoxLayout, QHeaderView,
+                             QDialogButtonBox)
 from PyQt6.QtCore import Qt, QDateTime
 from database import SessionLocal
 from models import Passenger, Train
 import openpyxl
 from datetime import datetime
+
 
 class PassengerDialog(QDialog):
     def __init__(self, parent=None, passenger=None):
@@ -47,8 +48,8 @@ class PassengerDialog(QDialog):
 
         # Применяем стили
         for widget in [self.first_name, self.last_name, self.passport, self.train_number,
-                      self.departure_station, self.arrival_station, self.seat_number,
-                      self.departure_time, self.arrival_time]:
+                       self.departure_station, self.arrival_station, self.seat_number,
+                       self.departure_time, self.arrival_time]:
             widget.setStyleSheet(input_style)
 
         if self.passenger:
@@ -110,7 +111,7 @@ class PassengerDialog(QDialog):
                 background-color: #424242;
             }
         """)
-        
+
         buttons_layout.addWidget(save_button)
         buttons_layout.addWidget(cancel_button)
         layout.addRow(buttons_layout)
@@ -128,6 +129,7 @@ class PassengerDialog(QDialog):
             'seat_number': self.seat_number.text()
         }
 
+
 class MainWindow(QWidget):
     def __init__(self, parent=None):
         super().__init__()
@@ -143,7 +145,7 @@ class MainWindow(QWidget):
         self.table = QTableWidget()
         self.table.setColumnCount(10)
         headers = ["ID", "Имя", "Фамилия", "Паспорт", "№ Поезда", "Станция отправления",
-                  "Станция прибытия", "Время отправления", "Время прибытия", "Место"]
+                   "Станция прибытия", "Время отправления", "Время прибытия", "Место"]
         self.table.setHorizontalHeaderLabels(headers)
 
         # Настраиваем внешний вид таблицы
@@ -171,7 +173,7 @@ class MainWindow(QWidget):
                 color: black;
             }
         """)
-        
+
         # Устанавливаем растягивание колонок
         header = self.table.horizontalHeader()
         for i in range(len(headers)):
@@ -179,7 +181,7 @@ class MainWindow(QWidget):
 
         # Кнопки управления
         button_layout = QHBoxLayout()
-        
+
         buttons_data = [
             ("Добавить", "#4CAF50", self.add_passenger),
             ("Редактировать", "#2196F3", self.edit_passenger),
@@ -217,7 +219,7 @@ class MainWindow(QWidget):
         with SessionLocal() as db:
             passengers = db.query(Passenger).all()
             self.table.setRowCount(len(passengers))
-            
+
             for i, passenger in enumerate(passengers):
                 self.table.setItem(i, 0, QTableWidgetItem(str(passenger.id)))
                 self.table.setItem(i, 1, QTableWidgetItem(passenger.first_name))
@@ -244,7 +246,7 @@ class MainWindow(QWidget):
         # Создаем поля ввода
         fields = {}
         for field in ["Имя", "Фамилия", "Паспорт", "№ Поезда", "Станция отправления",
-                     "Станция прибытия", "Время отправления", "Время прибытия", "Место"]:
+                      "Станция прибытия", "Время отправления", "Время прибытия", "Место"]:
             fields[field] = QLineEdit()
             layout.addRow(field + ":", fields[field])
 
@@ -271,7 +273,7 @@ class MainWindow(QWidget):
                         Passenger.train_number == fields["№ Поезда"].text(),
                         Passenger.seat_number == fields["Место"].text()
                     ).first()
-                    
+
                     if existing_seat:
                         QMessageBox.warning(self, "Ошибка", "Это место уже занято!")
                         return
@@ -319,8 +321,8 @@ class MainWindow(QWidget):
             # Показываем диалог со свободными местами
             msg = QMessageBox()
             msg.setWindowTitle("Свободные места")
-            msg.setText(f"Свободные места в поезде {train_number}:\n" + 
-                       ", ".join(sorted(available_seats, key=lambda x: int(x))))
+            msg.setText(f"Свободные места в поезде {train_number}:\n" +
+                        ", ".join(sorted(available_seats, key=lambda x: int(x))))
             msg.exec()
 
     def edit_passenger(self):
@@ -332,7 +334,7 @@ class MainWindow(QWidget):
         with SessionLocal() as db:
             passport_number = self.table.item(current_row, 3).text()
             passenger = db.query(Passenger).filter_by(passport_number=passport_number).first()
-            
+
             dialog = PassengerDialog(self, passenger)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 data = dialog.get_data()
@@ -348,9 +350,9 @@ class MainWindow(QWidget):
             return
 
         reply = QMessageBox.question(self, "Подтверждение",
-                                   "Вы уверены, что хотите удалить этого пассажира?",
-                                   QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
-        
+                                     "Вы уверены, что хотите удалить этого пассажира?",
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
         if reply == QMessageBox.StandardButton.Yes:
             with SessionLocal() as db:
                 passport_number = self.table.item(current_row, 3).text()
@@ -367,7 +369,7 @@ class MainWindow(QWidget):
 
             # Записываем заголовки
             headers = ["ID", "Имя", "Фамилия", "Паспорт", "№ Поезда", "Станция отправления",
-                      "Станция прибытия", "Время отправления", "Время прибытия", "Место"]
+                       "Станция прибытия", "Время отправления", "Время прибытия", "Место"]
             for col, header in enumerate(headers, 1):
                 ws.cell(row=1, column=col, value=header)
 
