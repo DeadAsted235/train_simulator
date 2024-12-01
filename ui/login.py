@@ -147,7 +147,6 @@ class LoginWidget(QWidget):
         with SessionLocal() as db:
             user = auth.authenticate_user(db, username, password)
             if user:
-                self.parent.show_success("Успешный вход в систему")
                 self.parent.show_main()
             else:
                 self.parent.show_error("Неверное имя пользователя или пароль")

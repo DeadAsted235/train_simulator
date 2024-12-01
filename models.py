@@ -4,7 +4,7 @@ from datetime import datetime
 
 
 class Passenger(Base):
-    __tablename__ = "Passengars"
+    __tablename__ = "Passengers"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     first_name = Column(String, index=True, nullable=False)
@@ -15,18 +15,19 @@ class Passenger(Base):
     number_passport = Column(Integer, nullable=False)
 
 
-class Station(Base):
-    __tablename__ = "Stations"
-
-    id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    name_station = Column(String, nullable=False, unique=True)
-    city_id = Column(Integer, ForeignKey("City.id"), nullable=False)
-
 class City(Base):
     __tablename__ = "City"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     name = Column(String)
+
+
+class Station(Base):
+    __tablename__ = "Stations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True, index=True)
+    name_station = Column(String, nullable=False, unique=True)
+    city_id = Column(Integer, ForeignKey(City.id), nullable=False)
 
 
 class Train(Base):
@@ -41,10 +42,10 @@ class Ticket(Base):
     __tablename__ = "Tickets"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    train_id = Column(Integer, ForeignKey("Train.id"))
-    departure_station_id = Column(Integer, ForeignKey("Station.id"))
-    arrival_station_id = Column(Integer, ForeignKey("Station.id"))
-    passenger_id = Column(Integer, ForeignKey("Passenger.id"))
+    train_id = Column(Integer, ForeignKey(Train.id))
+    departure_station_id = Column(Integer, ForeignKey(Station.id))
+    arrival_station_id = Column(Integer, ForeignKey(Station.id))
+    passenger_id = Column(Integer, ForeignKey(Passenger.id))
     departure_time = Column(DateTime, nullable=False)
     arrival_time = Column(DateTime, nullable=False)
     seat_number = Column(Integer, nullable=False)
@@ -71,9 +72,22 @@ class User(Base):
 def add_default_data():
     with SessionLocal() as db:
         if not db.query(Train).first():
-            train = Train(
+            db.add(Train(
                 train_name="Ласточка",
                 total_seats=443,
-            )
-            db.add(train)
-        db.commit()
+            ))
+            db.commit()
+
+        if not db.query(City).first():
+            db.add(City(
+                name="Мухосранск",
+            ))
+            db.commit()
+
+        if not db.query(Station).first():
+            city = db.query(City).first()
+            db.add(Station(
+                name_station="Мухосранск-1",
+                city_id=city.id,
+            ))
+            db.commit()
