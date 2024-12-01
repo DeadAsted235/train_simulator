@@ -17,6 +17,7 @@ class App(QMainWindow):
 
         # Создаем базу данных
         models.Base.metadata.create_all(bind=engine)
+        models.add_default_data()
 
         # Инициализируем центральный виджет
         self.central_widget = QWidget()

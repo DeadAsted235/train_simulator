@@ -38,7 +38,8 @@ class PassengerDialog(QDialog):
         self.first_name = QLineEdit(self.passenger.first_name if self.passenger else "")
         self.last_name = QLineEdit(self.passenger.last_name if self.passenger else "")
         self.middle_name = QLineEdit(self.passenger.middle_name if self.passenger else "")
-        self.passport = QLineEdit(self.passenger.passport_number if self.passenger else "")
+        self.number_passport = QLineEdit(self.passenger.number_passport if self.passenger else "")
+        self.series_passport = QLineEdit(self.passenger.series_passport if self.passenger else "")
         self.train_name = QLineEdit(self.passenger.train_name if self.passenger else "")
         self.departure_station = QLineEdit(self.passenger.departure_station if self.passenger else "")
         self.arrival_station = QLineEdit(self.passenger.arrival_station if self.passenger else "")
@@ -48,7 +49,8 @@ class PassengerDialog(QDialog):
         self.arrival_time = QDateTimeEdit()
 
         # Применяем стили
-        for widget in [self.first_name, self.last_name, self.middle_name, self.passport, self.train_name,
+        for widget in [self.first_name, self.last_name, self.middle_name, self.number_passport, self.series_passport,
+                       self.train_name,
                        self.departure_station, self.arrival_station, self.seat_number,
                        self.departure_time, self.arrival_time]:
             widget.setStyleSheet(input_style)
@@ -64,7 +66,8 @@ class PassengerDialog(QDialog):
         layout.addRow("Имя:", self.first_name)
         layout.addRow("Фамилия:", self.last_name)
         layout.addRow("Отчество", self.middle_name)
-        layout.addRow("Номер паспорта:", self.passport)
+        layout.addRow("Номер паспорта:", self.number_passport)
+        layout.addRow(("Серия паспорта"), self.series_passport)
         layout.addRow("Номер поезда:", self.train_name)
         layout.addRow("Станция отправления:", self.departure_station)
         layout.addRow("Станция прибытия:", self.arrival_station)
@@ -123,7 +126,8 @@ class PassengerDialog(QDialog):
             'first_name': self.first_name.text(),
             'last_name': self.last_name.text(),
             'middle_name': self.middle_name.text(),
-            'passport_number': self.passport.text(),
+            'passport_number': self.number_passport.text(),
+            'series_passport': self.series_passport.text(),
             'train_name': self.train_name.text(),
             'departure_station': self.departure_station.text(),
             'arrival_station': self.arrival_station.text(),
@@ -147,7 +151,8 @@ class MainWindow(QWidget):
         # Создаем таблицу
         self.table = QTableWidget()
         self.table.setColumnCount(10)
-        headers = ["ID", "Имя", "Фамилия", "Паспорт", "Отчество", "Название поезда", "Станция отправления",
+        headers = ["ID", "Имя", "Фамилия", "Серия паспорта", "Номер паспорта", "Отчество", "Название поезда",
+                   "Станция отправления",
                    "Станция прибытия", "Время отправления", "Время прибытия", "Место"]
         self.table.setHorizontalHeaderLabels(headers)
 
@@ -228,16 +233,17 @@ class MainWindow(QWidget):
                 self.table.setItem(i, 1, QTableWidgetItem(passenger.first_name))
                 self.table.setItem(i, 2, QTableWidgetItem(passenger.last_name))
                 self.table.setItem(i, 3, QTableWidgetItem(passenger.middle_name))
-                self.table.setItem(i, 4, QTableWidgetItem(passenger.passport_number))
-                self.table.setItem(i, 5, QTableWidgetItem(passenger.train_name))
-                self.table.setItem(i, 6, QTableWidgetItem(passenger.departure_station))
-                self.table.setItem(i, 7, QTableWidgetItem(passenger.arrival_station))
-                self.table.setItem(i, 8, QTableWidgetItem(passenger.departure_time.strftime("%Y-%m-%d %H:%M")))
-                self.table.setItem(i, 9, QTableWidgetItem(passenger.arrival_time.strftime("%Y-%m-%d %H:%M")))
-                self.table.setItem(i, 10, QTableWidgetItem(passenger.seat_number))
+                self.table.setItem(i, 4, QTableWidgetItem(passenger.number_passport))
+                self.table.setItem(i, 5, QTableWidgetItem(passenger.series_passport))
+                # self.table.setItem(i, 6, QTableWidgetItem(passenger.train_name))
+                # self.table.setItem(i, 7, QTableWidgetItem(passenger.departure_station))
+                # self.table.setItem(i, 8, QTableWidgetItem(passenger.arrival_station))
+                # self.table.setItem(i, 9, QTableWidgetItem(passenger.departure_time.strftime("%Y-%m-%d %H:%M")))
+                # self.table.setItem(i, 10, QTableWidgetItem(passenger.arrival_time.strftime("%Y-%m-%d %H:%M")))
+                # self.table.setItem(i, 11, QTableWidgetItem(passenger.seat_number))
 
                 # Центрируем текст в ячейках
-                for j in range(10):
+                for j in range(6):
                     item = self.table.item(i, j)
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -249,7 +255,8 @@ class MainWindow(QWidget):
 
         # Создаем поля ввода
         fields = {}
-        for field in ["Имя", "Фамилия", "Отчество", "Паспорт", "Название поезда", "Станция отправления",
+        for field in ["Имя", "Фамилия", "Отчество", "Серия паспорта", "Номер паспорта", "Название поезда",
+                      "Станция отправления",
                       "Станция прибытия", "Время отправления", "Время прибытия", "Место"]:
             fields[field] = QLineEdit()
             layout.addRow(field + ":", fields[field])
@@ -272,9 +279,12 @@ class MainWindow(QWidget):
         if dialog.exec() == QDialog.DialogCode.Accepted:
             try:
                 with SessionLocal() as db:
+
+                    # Прверяем наличие поезда
                     train = db.query(Train).filter(
                         Train.train_name == fields["Название поезда"].text(),
-                    )
+                    ).first()
+
                     if not train:
                         QMessageBox.warning(self, "Ошибка", "Поезд не найден")
                         return
@@ -289,12 +299,30 @@ class MainWindow(QWidget):
                         QMessageBox.warning(self, "Ошибка", "Это место уже занято!")
                         return
 
+                    passenger = db.query(Passenger).filter(
+                        Passenger.series_passport == fields["Серия паспорта"].text(),
+                        Passenger.number_passport == fields["Номер паспорта"].text(),
+                    ).first()
+
+                    if not passenger:
+                        passenger = Passenger(
+                            first_name=fields["Имя"].text(),
+                            last_name=fields["Фамилия"].text(),
+                            middle_name=fields["Отчество"].text(),
+                            number_passport=fields["Номер паспорта"].text(),
+                            series_passport=fields["Серия паспорта"].text()
+                        )
+                        db.add(passenger)
+                        db.commit()
+
+                    passenger = db.query(Passenger).filter(
+                        Passenger.series_passport == fields["Серия паспорта"].text(),
+                        Passenger.number_passport == fields["Номер паспорта"].text()
+                    )
+
                     ticket = Ticket(
-                        first_name=fields["Имя"].text(),
-                        last_name=fields["Фамилия"].text(),
-                        middle_name=fields["Отчество"].text(),
-                        passport_number=fields["Паспорт"].text(),
-                        train_name=fields["Название поезда"].text(),
+                        train_id=train.id,
+                        passenger_id=passenger.id,
                         departure_station=fields["Станция отправления"].text(),
                         arrival_station=fields["Станция прибытия"].text(),
                         departure_time=datetime.strptime(fields["Время отправления"].text(), "%Y-%m-%d %H:%M"),
@@ -392,7 +420,7 @@ class MainWindow(QWidget):
                     ws.cell(row=row, column=1, value=passenger.id)
                     ws.cell(row=row, column=2, value=passenger.first_name)
                     ws.cell(row=row, column=3, value=passenger.last_name)
-                    we.cell(row=row, column=4, value=passenger.middle_name)
+                    ws.cell(row=row, column=4, value=passenger.middle_name)
                     ws.cell(row=row, column=5, value=passenger.passport_number)
                     ws.cell(row=row, column=6, value=passenger.train_name)
                     ws.cell(row=row, column=7, value=passenger.departure_station)
