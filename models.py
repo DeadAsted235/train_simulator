@@ -1,4 +1,5 @@
 from sqlalchemy import Boolean, Column, Integer, SmallInteger, ForeignKey, VARCHAR, String, DateTime, UniqueConstraint
+from sqlalchemy.orm import relationship
 from database import Base, SessionLocal
 from datetime import datetime
 
@@ -50,6 +51,12 @@ class Ticket(Base):
     arrival_time = Column(DateTime, nullable=False)
     seat_number = Column(Integer, nullable=False)
 
+    train = relationship(Train)
+    passenger = relationship(Passenger)
+
+    departure_station = relationship(Station, foreign_keys=[departure_station_id])
+    arrival_station = relationship(Station, foreign_keys=[arrival_station_id])
+
 
 class User(Base):
     __tablename__ = "Users"
@@ -67,6 +74,12 @@ class User(Base):
         UniqueConstraint('username', name='unique_username'),
         UniqueConstraint('email', name='unique_mail'),
     )
+
+
+class Admin(Base):
+    __tablename__ = "Admins"
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(Integer, ForeignKey(User.id), index=True)
 
 
 def add_default_data():

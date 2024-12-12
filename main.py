@@ -9,11 +9,14 @@ from ui.login import LoginWidget
 from ui.register import RegisterWidget
 from ui.main_window import MainWindow
 
+
 class App(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Система управления пассажирами")
         self.setGeometry(100, 100, 1200, 800)
+
+        self.user = None
 
         # Создаем базу данных
         models.Base.metadata.create_all(bind=engine)
@@ -31,12 +34,11 @@ class App(QMainWindow):
         # Создаем виджеты для разных экранов
         self.login_widget = LoginWidget(self)
         self.register_widget = RegisterWidget(self)
-        self.main_window = MainWindow(self)
+        self.main_window = None
 
         # Добавляем виджеты в стек
         self.stack.addWidget(self.login_widget)
         self.stack.addWidget(self.register_widget)
-        self.stack.addWidget(self.main_window)
 
         # Начинаем с экрана входа
         self.stack.setCurrentWidget(self.login_widget)
@@ -48,6 +50,8 @@ class App(QMainWindow):
         self.stack.setCurrentWidget(self.register_widget)
 
     def show_main(self):
+        self.main_window = MainWindow(self)
+        self.stack.addWidget(self.main_window)
         self.stack.setCurrentWidget(self.main_window)
 
     def show_error(self, message):
@@ -55,6 +59,7 @@ class App(QMainWindow):
 
     def show_success(self, message):
         QMessageBox.information(self, "Успех", message)
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
