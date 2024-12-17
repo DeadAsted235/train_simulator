@@ -195,12 +195,8 @@ class TicketDialog(QDialog):
             msg.exec()
 
     def save(self):
-        if not self.ticket:
-            return self.accept() if True else self.reject()
-        elif self.create_ticket():
+        if self.ticket or self.create_ticket():
             self.accept()
-            return
-        self.reject()
 
     def create_ticket(self) -> bool:
         with SessionLocal() as db:
