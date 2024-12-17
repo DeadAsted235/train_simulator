@@ -218,10 +218,14 @@ class TicketDialog(QDialog):
 
             # Проверяем, не занято ли место
             existing_seat = db.query(Ticket).filter(
-                Ticket.id != self.ticket.id if self.ticket else -1,
+                Ticket.id != self.ticket.id,
+                Ticket.train_id == train.id,
+                Ticket.seat_number == seat_number,
+            ).first() if self.ticket else db.query(Ticket).filter(
                 Ticket.train_id == train.id,
                 Ticket.seat_number == seat_number,
             ).first()
+
 
             if existing_seat:
                 QMessageBox.warning(self, "Ошибка", "Это место уже занято!")

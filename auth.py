@@ -24,8 +24,8 @@ def authenticate_user(db: Session, username: str, password: str):
 
 def create_user(db: Session, username: str, firstname: str, lastname: str, middlename: str, email: str, password: str):
     hashed_password = get_password_hash(password)
-    db_user = User(username=username, firstname=firstname, lastname=lastname, middlename=middlename, email=email,
-                   password=hashed_password)
+    db_user = User(username=username, firstname=firstname, lastname=lastname, middle_name=middlename, email=email,
+                   password=hashed_password, is_admin=False)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
