@@ -281,15 +281,15 @@ class TicketDialog(QDialog):
 
     def get_data(self):
         return {
-            'first_name': self.first_name.text(),
-            'last_name': self.last_name.text(),
-            'middle_name': self.middle_name.text(),
-            'passport_number': self.number_passport.text(),
-            'series_passport': self.series_passport.text(),
-            'train_name': self.train_name.text(),
-            'departure_station': self.departure_station.text(),
-            'arrival_station': self.arrival_station.text(),
-            'departure_time': self.departure_time.dateTime().toPyDateTime(),
-            'arrival_time': self.arrival_time.dateTime().toPyDateTime(),
-            'seat_number': self.seat_number.text()
+            # 'first_name': self.first_name.text(),
+            # 'last_name': self.last_name.text(),
+            # 'middle_name': self.middle_name.text(),
+            # 'passport_number': self.number_passport.text(),
+            # 'series_passport': self.series_passport.text(),
+            # 'train_name': self.train_name.text(),
+            # 'departure_station': self.departure_station.text(),
+            # 'arrival_station': self.arrival_station.text(),
+            # 'departure_time': self.departure_time.dateTime().toPyDateTime(),
+            # 'arrival_time': self.arrival_time.dateTime().toPyDateTime(),
+            # 'seat_number': self.seat_number.text()
         }

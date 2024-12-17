@@ -70,7 +70,7 @@ class MainWindow(QWidget):
         if self.parent.user:
             with SessionLocal() as db:
                 if self.parent.user.is_admin:
-                    buttons_data.append(("Редактировать", "#2196F3", self.edit_passenger))
+                    # buttons_data.append(("Редактировать", "#2196F3", self.edit_passenger))
                     buttons_data.append(("Удалить", "#F44336", self.delete_passenger))
 
         for text, color, callback in buttons_data:
@@ -157,15 +157,20 @@ class MainWindow(QWidget):
             QMessageBox.warning(self, "Предупреждение", "Выберите пассажира для удаления")
             return
 
-        reply = QMessageBox.question(self, "Подтверждение",
-                                     "Вы уверены, что хотите удалить этого пассажира?",
-                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+        with SessionLocal() as db:
+            ticket_id = int(self.table.item(current_row,0).text())
+            ticket = db.query(Ticket).filter_by(id=ticket_id).first()
 
-        if reply == QMessageBox.StandardButton.Yes:
-            with SessionLocal() as db:
-                passport_number = self.table.item(current_row, 3).text()
-                passenger = db.query(Passenger).filter_by(passport_number=passport_number).first()
-                db.delete(passenger)
+            if not ticket:
+                QMessageBox.warning(self, "Предупреждение", "Пассажир не найден")
+                return
+
+            reply = QMessageBox.question(self, "Подтверждение",
+                                        "Вы уверены, что хотите удалить этого пассажира?",
+                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+
+            if reply == QMessageBox.StandardButton.Yes:
+                db.delete(ticket)
                 db.commit()
                 self.load_data()
 
