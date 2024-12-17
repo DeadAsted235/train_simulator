@@ -9,14 +9,16 @@ import openpyxl
 from datetime import datetime
 
 
-class PassengerDialog(QDialog):
-    def __init__(self, parent=None, passenger=None):
+class TicketDialog(QDialog):
+    def __init__(self, parent, user, ticket: Ticket=None):
         super().__init__(parent)
-        self.passenger = passenger
+        self.user = user
+
+        self.ticket = ticket
         self.setup_ui()
 
     def setup_ui(self):
-        self.setWindowTitle("Добавить пассажира" if not self.passenger else "Редактировать пассажира")
+        self.setWindowTitle("Добавить билет" if not self.ticket else "Редактировать билет")
         self.setFixedWidth(500)
         layout = QFormLayout()
         self.setLayout(layout)
@@ -35,31 +37,39 @@ class PassengerDialog(QDialog):
         """
 
         # Создаем поля ввода
-        self.first_name = QLineEdit(self.passenger.first_name if self.passenger else "", self)
-        self.last_name = QLineEdit(self.passenger.last_name if self.passenger else "", self)
-        self.middle_name = QLineEdit(self.passenger.middle_name if self.passenger else "", self)
+        self.first_name = QLineEdit(self.ticket.passenger.first_name if self.ticket else "", self)
+        self.last_name = QLineEdit(self.ticket.passenger.last_name if self.ticket else "", self)
+        self.middle_name = QLineEdit(self.ticket.passenger.middle_name if self.ticket else "", self)
 
         self.series_passport = QLineEdit(self)
         self.series_passport.setInputMask("0000")
-        self.series_passport.setText(self.passenger.series_passport if self.passenger else "")
+        self.series_passport.setText(str(self.ticket.passenger.series_passport) if self.ticket.passenger else "")
 
         self.number_passport = QLineEdit(self)
         self.number_passport.setInputMask("000000")
-        self.number_passport.setText(self.passenger.number_passport if self.passenger else "")
+        self.number_passport.setText(str(self.ticket.passenger.number_passport) if self.ticket.passenger else "")
 
         with SessionLocal() as db:
             trains=[train.train_name for train in db.query(Train).all()]
             self.train_name = QComboBox(self)
             self.train_name.addItems(trains)
+            self.train_name.setCurrentIndex(self.train_name.findData(self.ticket.train.train_name) if self.ticket else 0)
             self.train_name.currentTextChanged.connect(self.update_seats_range)
         
             stations = [station.name_station for station in db.query(Station).all()]
+            
             self.departure_station = QComboBox(self)
             self.departure_station.addItems(stations)
+            self.departure_station.setCurrentIndex(self.departure_station.findData(self.ticket.departure_station.name_station) if self.ticket else 0)
+            
             self.arrival_station = QComboBox(self)
             self.arrival_station.addItems(stations)
+            self.arrival_station.setCurrentIndex(self.arrival_station.findData(self.ticket.arrival_station.name_station) if self.ticket else 0)
 
         self.seat_number = QSpinBox(self)
+        if self.ticket:
+            self.seat_number.setValue(self.ticket.seat_number)
+
         self.update_seats_range()
 
         self.departure_time = QDateTimeEdit(self)
@@ -71,16 +81,16 @@ class PassengerDialog(QDialog):
                        self.departure_time, self.arrival_time]:
             widget.setStyleSheet(input_style)
 
-        if self.passenger:
-            self.departure_time.setDateTime(self.passenger.departure_time)
-            self.arrival_time.setDateTime(self.passenger.arrival_time)
+        if self.ticket:
+            self.departure_time.setDateTime(self.ticket.departure_time)
+            self.arrival_time.setDateTime(self.ticket.arrival_time)
         else:
             self.departure_time.setDateTime(QDateTime.currentDateTime())
             self.arrival_time.setDateTime(QDateTime.currentDateTime())
 
         # Добавляем поля в форму
-        layout.addRow("Имя:", self.first_name)
         layout.addRow("Фамилия:", self.last_name)
+        layout.addRow("Имя:", self.first_name)
         layout.addRow("Отчество", self.middle_name)
         layout.addRow("Серия паспорта", self.series_passport)
         layout.addRow("Номер паспорта:", self.number_passport)
@@ -185,8 +195,12 @@ class PassengerDialog(QDialog):
             msg.exec()
 
     def save(self):
-        if self.passenger or self.create_passenger():
+        if not self.ticket:
+            return self.accept() if True else self.reject()
+        elif self.create_passenger():
             self.accept()
+            return
+        self.reject()
 
     def create_passenger(self) -> bool:
         with SessionLocal() as db:
@@ -208,6 +222,7 @@ class PassengerDialog(QDialog):
 
             # Проверяем, не занято ли место
             existing_seat = db.query(Ticket).filter(
+                Ticket.id != self.ticket.id if self.ticket else -1,
                 Ticket.train_id == train.id,
                 Ticket.seat_number == seat_number,
             ).first()
@@ -227,7 +242,7 @@ class PassengerDialog(QDialog):
                     last_name=self.last_name.text(),
                     middle_name=self.middle_name.text(),
                     number_passport=self.number_passport.text(),
-                    series_passport=self.series_passport.text()
+                    series_passport=self.series_passport.text(),
                 )
                 db.add(passenger)
                 db.commit()
@@ -256,6 +271,7 @@ class PassengerDialog(QDialog):
                 departure_time=self.departure_time.dateTime().toPyDateTime(),
                 arrival_time=self.arrival_time.dateTime().toPyDateTime(),
                 seat_number=self.seat_number.text(),
+                cashier_id=self.user.id,
             )
             db.add(ticket)
             db.commit()

@@ -4,10 +4,10 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QTableWidget,
                              QDialogButtonBox, QComboBox, QSpinBox)
 from PyQt6.QtCore import Qt, QDateTime
 from database import SessionLocal
-from models import Passenger, Train, Ticket, Station, Admin
+from models import Passenger, Train, Ticket, Station
 import openpyxl
 from datetime import datetime
-from .passanger_dialog import PassengerDialog
+from .ticket_dialog import TicketDialog
 
 
 class MainWindow(QWidget):
@@ -23,7 +23,7 @@ class MainWindow(QWidget):
 
         # Создаем таблицу
         self.table = QTableWidget()
-        headers = ["ID", "ФИО", "Паспорт", "Название поезда", "Место", "Станция отправления", "Станция прибытия", "Время отправления", "Время прибытия"]
+        headers = ["ID", "ФИО", "Паспорт", "Название поезда", "Место", "Станция отправления", "Станция прибытия", "Время отправления", "Время прибытия", "ФИО Кассира"]
         self.table.setColumnCount(len(headers))
         self.table.setHorizontalHeaderLabels(headers)
 
@@ -69,10 +69,7 @@ class MainWindow(QWidget):
 
         if self.parent.user:
             with SessionLocal() as db:
-                admin = db.query(Admin).filter(
-                    Admin.user_id == self.parent.user.id
-                ).first()
-                if admin:
+                if self.parent.user.is_admin:
                     buttons_data.append(("Редактировать", "#2196F3", self.edit_passenger))
                     buttons_data.append(("Удалить", "#F44336", self.delete_passenger))
 
@@ -109,6 +106,7 @@ class MainWindow(QWidget):
             for i, ticket in enumerate(tickets):
                 full_name = ' '.join([ticket.passenger.first_name, ticket.passenger.middle_name, ticket.passenger.last_name])
                 passport = ' '.join(map(str, [ticket.passenger.series_passport, ticket.passenger.number_passport]))
+                cashier_full_name = ' '.join([ticket.cashier.lastname, ticket.cashier.firstname, ticket.cashier.middle_name]) if ticket.cashier else ""
 
                 items = [
                     QTableWidgetItem(str(ticket.id)),
@@ -120,6 +118,7 @@ class MainWindow(QWidget):
                     QTableWidgetItem(ticket.arrival_station.name_station),
                     QTableWidgetItem(ticket.departure_time.strftime("%Y-%m-%d %H:%M")),
                     QTableWidgetItem(ticket.arrival_time.strftime("%Y-%m-%d %H:%M")),
+                    QTableWidgetItem(cashier_full_name),
                 ]
 
                 for j, item in enumerate(items):
@@ -127,7 +126,7 @@ class MainWindow(QWidget):
                     item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
 
     def add_passenger(self):
-        dialog = PassengerDialog(self)
+        dialog = TicketDialog(self, self.parent.user)
         dialog.exec()
 
     def edit_passenger(self):
@@ -137,14 +136,18 @@ class MainWindow(QWidget):
             return
 
         with SessionLocal() as db:
-            passport_number = self.table.item(current_row, 3).text()
-            passenger = db.query(Passenger).filter_by(passport_number=passport_number).first()
+            ticket_id = int(self.table.item(current_row,0).text())
+            ticket = db.query(Ticket).filter_by(id=ticket_id).first()
 
-            dialog = PassengerDialog(self, passenger)
+            if not ticket:
+                QMessageBox.warning(self, "Предупреждение", "Пассажир не найден")
+                return
+
+            dialog = TicketDialog(self, self.parent.user, ticket)
             if dialog.exec() == QDialog.DialogCode.Accepted:
                 data = dialog.get_data()
                 for key, value in data.items():
-                    setattr(passenger, key, value)
+                    setattr(ticket, key, value)
                 db.commit()
                 self.load_data()
 
