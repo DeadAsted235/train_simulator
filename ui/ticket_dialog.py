@@ -43,11 +43,11 @@ class TicketDialog(QDialog):
 
         self.series_passport = QLineEdit(self)
         self.series_passport.setInputMask("0000")
-        self.series_passport.setText(str(self.ticket.passenger.series_passport) if self.ticket.passenger else "")
+        self.series_passport.setText(str(self.ticket.passenger.series_passport) if self.ticket else "")
 
         self.number_passport = QLineEdit(self)
         self.number_passport.setInputMask("000000")
-        self.number_passport.setText(str(self.ticket.passenger.number_passport) if self.ticket.passenger else "")
+        self.number_passport.setText(str(self.ticket.passenger.number_passport) if self.ticket else "")
 
         with SessionLocal() as db:
             trains=[train.train_name for train in db.query(Train).all()]
@@ -197,12 +197,12 @@ class TicketDialog(QDialog):
     def save(self):
         if not self.ticket:
             return self.accept() if True else self.reject()
-        elif self.create_passenger():
+        elif self.create_ticket():
             self.accept()
             return
         self.reject()
 
-    def create_passenger(self) -> bool:
+    def create_ticket(self) -> bool:
         with SessionLocal() as db:
             # Прверяем наличие поезда
             train = db.query(Train).filter(
