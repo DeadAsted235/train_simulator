@@ -72,7 +72,7 @@ class MainWindow(QWidget):
         if self.parent.user:
             with SessionLocal() as db:
                 if self.parent.user.is_admin:
-                    # buttons_data.append(("Редактировать", "#2196F3", self.edit_passenger))
+                    buttons_data.append(("Редактировать", "#2196F3", self.edit_passenger))
                     buttons_data.append(("Удалить", "#F44336", self.delete_passenger))
 
         for text, color, callback in buttons_data:
@@ -132,6 +132,7 @@ class MainWindow(QWidget):
     def add_passenger(self):
         dialog = TicketDialog(self, self.parent.user)
         dialog.exec()
+        self.load_data()
 
     def edit_passenger(self):
         current_row = self.table.currentRow()
@@ -148,12 +149,9 @@ class MainWindow(QWidget):
                 return
 
             dialog = TicketDialog(self, self.parent.user, ticket)
-            if dialog.exec() == QDialog.DialogCode.Accepted:
-                data = dialog.get_data()
-                for key, value in data.items():
-                    setattr(ticket, key, value)
-                db.commit()
-                self.load_data()
+
+        dialog.exec()
+        self.load_data()
 
     def delete_passenger(self):
         current_row = self.table.currentRow()

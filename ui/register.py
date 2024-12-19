@@ -192,7 +192,7 @@ class RegisterWidget(QWidget):
             return
 
         # Список допустимых доменов
-        allowed_domains = ["@gmail.com", "@yahoo.com", "@outlook.com"]
+        allowed_domains = ["@gmail.com", "@yandex.ru", "@mail.ru"]
 
         # Проверка на валидность email
         if not any(email.endswith(domain) for domain in allowed_domains):
@@ -208,7 +208,7 @@ class RegisterWidget(QWidget):
             return
 
         if not confirm_password:
-            self.parent.show_error("Поле 'Подтверждение пароля' не может быть пустым")
+            self.parent.show_error("Поле 'Подтверждение пароля' не может быть пустым!")
             return
 
         if password != confirm_password:

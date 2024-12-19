@@ -3,6 +3,8 @@ from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QPushButton, QTableWidget,
                              QDateTimeEdit, QMessageBox, QHBoxLayout, QHeaderView,
                              QDialogButtonBox, QComboBox, QSpinBox)
 from PyQt6.QtCore import Qt, QDateTime
+from sqlalchemy import update
+
 from database import SessionLocal
 from models import Passenger, Train, Ticket, Station
 import openpyxl
@@ -10,7 +12,7 @@ from datetime import datetime
 
 
 class TicketDialog(QDialog):
-    def __init__(self, parent, user, ticket: Ticket=None):
+    def __init__(self, parent, user, ticket: Ticket = None):
         super().__init__(parent)
         self.user = user
 
@@ -50,21 +52,24 @@ class TicketDialog(QDialog):
         self.number_passport.setText(str(self.ticket.passenger.number_passport) if self.ticket else "")
 
         with SessionLocal() as db:
-            trains=[train.train_name for train in db.query(Train).all()]
+            trains = [train.train_name for train in db.query(Train).all()]
             self.train_name = QComboBox(self)
             self.train_name.addItems(trains)
-            self.train_name.setCurrentIndex(self.train_name.findData(self.ticket.train.train_name) if self.ticket else 0)
+            self.train_name.setCurrentIndex(
+                self.train_name.findData(self.ticket.train.train_name) if self.ticket else 0)
             self.train_name.currentTextChanged.connect(self.update_seats_range)
-        
+
             stations = [station.name_station for station in db.query(Station).all()]
-            
+
             self.departure_station = QComboBox(self)
             self.departure_station.addItems(stations)
-            self.departure_station.setCurrentIndex(self.departure_station.findData(self.ticket.departure_station.name_station) if self.ticket else 0)
-            
+            self.departure_station.setCurrentIndex(
+                self.departure_station.findData(self.ticket.departure_station.name_station) if self.ticket else 0)
+
             self.arrival_station = QComboBox(self)
             self.arrival_station.addItems(stations)
-            self.arrival_station.setCurrentIndex(self.arrival_station.findData(self.ticket.arrival_station.name_station) if self.ticket else 0)
+            self.arrival_station.setCurrentIndex(
+                self.arrival_station.findData(self.ticket.arrival_station.name_station) if self.ticket else 0)
 
         self.seat_number = QSpinBox(self)
         if self.ticket:
@@ -195,10 +200,10 @@ class TicketDialog(QDialog):
             msg.exec()
 
     def save(self):
-        if self.ticket or self.create_ticket():
+        if self.save_ticket():
             self.accept()
 
-    def create_ticket(self) -> bool:
+    def save_ticket(self) -> bool:
         with SessionLocal() as db:
             # Прверяем наличие поезда
             train = db.query(Train).filter(
@@ -208,7 +213,7 @@ class TicketDialog(QDialog):
             if not train:
                 QMessageBox.warning(self, "Ошибка", "Поезд не найден")
                 return False
-            
+
             seat_number = 0
             try:
                 seat_number = int(self.seat_number.text())
@@ -225,7 +230,6 @@ class TicketDialog(QDialog):
                 Ticket.train_id == train.id,
                 Ticket.seat_number == seat_number,
             ).first()
-
 
             if existing_seat:
                 QMessageBox.warning(self, "Ошибка", "Это место уже занято!")
@@ -246,11 +250,11 @@ class TicketDialog(QDialog):
                 )
                 db.add(passenger)
                 db.commit()
-            
+
             departure_station = db.query(Station).filter(
                 Station.name_station == self.departure_station.currentText(),
             ).first()
-            
+
             if not departure_station:
                 QMessageBox.warning(self, "Ошибка", "Станция отправления не найдена!")
                 return False
@@ -258,38 +262,37 @@ class TicketDialog(QDialog):
             arrival_station = db.query(Station).filter(
                 Station.name_station == self.arrival_station.currentText(),
             ).first()
-            
+
             if not arrival_station:
                 QMessageBox.warning(self, "Ошибка", "Станция прибытия не найдена!")
                 return False
 
-            ticket = Ticket(
-                train_id=train.id,
-                passenger_id=passenger.id,
-                departure_station_id=departure_station.id,
-                arrival_station_id=arrival_station.id,
-                departure_time=self.departure_time.dateTime().toPyDateTime(),
-                arrival_time=self.arrival_time.dateTime().toPyDateTime(),
-                seat_number=self.seat_number.text(),
-                cashier_id=self.user.id,
-            )
-            db.add(ticket)
+            if not self.ticket:
+
+                ticket = Ticket(
+                    train_id=train.id,
+                    passenger_id=passenger.id,
+                    departure_station_id=departure_station.id,
+                    arrival_station_id=arrival_station.id,
+                    departure_time=self.departure_time.dateTime().toPyDateTime(),
+                    arrival_time=self.arrival_time.dateTime().toPyDateTime(),
+                    seat_number=self.seat_number.text(),
+                    cashier_id=self.user.id,
+                )
+                db.add(ticket)
+            else:
+                self.ticket = db.query(Ticket).filter_by(id=self.ticket.id).first()
+
+                self.ticket.train_id = train.id
+                self.ticket.passenger_id = passenger.id
+                self.ticket.departure_station_id = departure_station.id
+                self.ticket.arrival_station_id = arrival_station.id
+                self.ticket.departure_time = self.departure_time.dateTime().toPyDateTime()
+                self.ticket.arrival_time = self.arrival_time.dateTime().toPyDateTime()
+                self.ticket.seat_number = self.seat_number.text()
+                self.ticket.cashier_id = self.user.id
+
             db.commit()
 
             QMessageBox.information(self, "Успех", "Пассажир успешно добавлен")
             return True
-
-    def get_data(self):
-        return {
-            # 'first_name': self.first_name.text(),
-            # 'last_name': self.last_name.text(),
-            # 'middle_name': self.middle_name.text(),
-            # 'passport_number': self.number_passport.text(),
-            # 'series_passport': self.series_passport.text(),
-            # 'train_name': self.train_name.text(),
-            # 'departure_station': self.departure_station.text(),
-            # 'arrival_station': self.arrival_station.text(),
-            # 'departure_time': self.departure_time.dateTime().toPyDateTime(),
-            # 'arrival_time': self.arrival_time.dateTime().toPyDateTime(),
-            # 'seat_number': self.seat_number.text()
-        }
