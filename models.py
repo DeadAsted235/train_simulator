@@ -1,5 +1,5 @@
 from passlib.context import CryptContext
-from sqlalchemy import Boolean, Column, Integer, SmallInteger, ForeignKey, VARCHAR, String, DateTime, UniqueConstraint
+from sqlalchemy import Boolean, Column, Integer, SmallInteger, ForeignKey, String, DateTime, UniqueConstraint
 from sqlalchemy.orm import relationship
 from database import Base, SessionLocal
 from datetime import datetime
@@ -91,26 +91,26 @@ def add_default_data():
 
         if not db.query(City).first():
             db.add(City(
-                name="Мухосранск",
+                name="Петербург",
             ))
             db.commit()
 
         if not db.query(Station).first():
             city = db.query(City).first()
             db.add(Station(
-                name_station="Мухосранск-1",
+                name_station="Москва",
                 city_id=city.id,
             ))
             db.commit()
-        
+
         if not db.query(User).first():
             db.add(User(
-                username = "admin",
-                firstname ="Administrator",
-                lastname = "Administrator",
-                middle_name = "Administrator",
-                password = CryptContext(schemes=["bcrypt"], deprecated="auto").hash("admin"),
-                email = "admin@db.local",
-                is_admin = True,
+                username="admin",
+                firstname="Administrator",
+                lastname="Administrator",
+                middle_name="Administrator",
+                password=CryptContext(schemes=["bcrypt"], deprecated="auto").hash("admin"),
+                email="admin@db.local",
+                is_admin=True,
             ))
             db.commit()

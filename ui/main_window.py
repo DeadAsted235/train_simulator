@@ -23,10 +23,12 @@ class MainWindow(QWidget):
 
         # Создаем таблицу
         self.table = QTableWidget()
-        headers = ["ID", "ФИО", "Паспорт", "Название поезда", "Место", "Станция отправления", "Станция прибытия", "Время отправления", "Время прибытия", "ФИО Кассира"]
+        headers = ["ID", "ФИО", "Паспорт", "Название поезда", "Место", "Станция отправления", "Станция прибытия",
+                   "Время отправления", "Время прибытия", "ФИО Кассира"]
         self.table.setColumnCount(len(headers))
         self.table.setHorizontalHeaderLabels(headers)
-
+        self.table.verticalHeader().setVisible(False)
+        self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         # Настраиваем внешний вид таблицы
         self.table.setStyleSheet("""
             QTableWidget {
@@ -104,9 +106,11 @@ class MainWindow(QWidget):
             self.table.setRowCount(len(tickets))
 
             for i, ticket in enumerate(tickets):
-                full_name = ' '.join([ticket.passenger.first_name, ticket.passenger.middle_name, ticket.passenger.last_name])
+                full_name = ' '.join(
+                    [ticket.passenger.first_name, ticket.passenger.middle_name, ticket.passenger.last_name])
                 passport = ' '.join(map(str, [ticket.passenger.series_passport, ticket.passenger.number_passport]))
-                cashier_full_name = ' '.join([ticket.cashier.lastname, ticket.cashier.firstname, ticket.cashier.middle_name]) if ticket.cashier else ""
+                cashier_full_name = ' '.join([ticket.cashier.lastname, ticket.cashier.firstname,
+                                              ticket.cashier.middle_name]) if ticket.cashier else ""
 
                 items = [
                     QTableWidgetItem(str(ticket.id)),
@@ -136,7 +140,7 @@ class MainWindow(QWidget):
             return
 
         with SessionLocal() as db:
-            ticket_id = int(self.table.item(current_row,0).text())
+            ticket_id = int(self.table.item(current_row, 0).text())
             ticket = db.query(Ticket).filter_by(id=ticket_id).first()
 
             if not ticket:
@@ -158,7 +162,7 @@ class MainWindow(QWidget):
             return
 
         with SessionLocal() as db:
-            ticket_id = int(self.table.item(current_row,0).text())
+            ticket_id = int(self.table.item(current_row, 0).text())
             ticket = db.query(Ticket).filter_by(id=ticket_id).first()
 
             if not ticket:
@@ -166,8 +170,8 @@ class MainWindow(QWidget):
                 return
 
             reply = QMessageBox.question(self, "Подтверждение",
-                                        "Вы уверены, что хотите удалить этого пассажира?",
-                                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                                         "Вы уверены, что хотите удалить этого пассажира?",
+                                         QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
 
             if reply == QMessageBox.StandardButton.Yes:
                 db.delete(ticket)
@@ -181,7 +185,8 @@ class MainWindow(QWidget):
             ws.title = "Пассажиры"
 
             # Записываем заголовки
-            headers = ["ID", "ФИО", "Паспорт", "Название поезда", "Место", "Станция отправления", "Станция прибытия", "Время отправления", "Время прибытия"]
+            headers = ["ID", "ФИО", "Паспорт", "Название поезда", "Место", "Станция отправления", "Станция прибытия",
+                       "Время отправления", "Время прибытия"]
             for col, header in enumerate(headers, 1):
                 ws.cell(row=1, column=col, value=header)
 
@@ -189,7 +194,8 @@ class MainWindow(QWidget):
             with SessionLocal() as db:
                 tickets = db.query(Ticket).all()
                 for row, ticket in enumerate(tickets, 2):
-                    full_name = ' '.join([ticket.passenger.first_name, ticket.passenger.middle_name, ticket.passenger.last_name])
+                    full_name = ' '.join(
+                        [ticket.passenger.first_name, ticket.passenger.middle_name, ticket.passenger.last_name])
                     passport = ' '.join(map(str, [ticket.passenger.series_passport, ticket.passenger.number_passport]))
 
                     values = [
@@ -203,7 +209,7 @@ class MainWindow(QWidget):
                         ticket.departure_time.strftime("%Y-%m-%d %H:%M"),
                         ticket.arrival_time.strftime("%Y-%m-%d %H:%M"),
                     ]
-                    for col, value in enumerate(values,1):
+                    for col, value in enumerate(values, 1):
                         ws.cell(row=row, column=col, value=str(value))
 
             # Сохраняем файл

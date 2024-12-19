@@ -163,16 +163,52 @@ class RegisterWidget(QWidget):
         main_layout.addSpacerItem(QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding))
 
     def register(self):
-        username = self.username_input.text()
-        name = self.name_input.text()
-        lastname = self.lastname_input.text()
-        middlename = self.lastname_input.text()
-        email = self.email_input.text()
+        username = self.username_input.text().strip()
+        name = self.name_input.text().strip()
+        lastname = self.lastname_input.text().strip()
+        middlename = self.middlename_input.text().strip()
+        email = self.email_input.text().strip()
         password = self.password_input.text()
         confirm_password = self.confirm_password_input.text()
 
-        if not all([username, name, lastname, middlename, email, password, confirm_password]):
-            self.parent.show_error("Пожалуйста, заполните все поля")
+        # Проверка на пустоту каждого поля
+        if not username:
+            self.parent.show_error("Поле 'Имя для входа' не может быть пустым")
+            return
+        if len(username) < 3:
+            self.parent.show_error("Имя для входа должно содержать минимум 3 символа")
+            return
+
+        if not name:
+            self.parent.show_error("Поле 'Имя пользователя' не может быть пустым")
+            return
+
+        if not lastname:
+            self.parent.show_error("Поле 'Фамилия пользователя' не может быть пустым")
+            return
+
+        if not email:
+            self.parent.show_error("Поле 'Email' не может быть пустым")
+            return
+
+        # Список допустимых доменов
+        allowed_domains = ["@gmail.com", "@yahoo.com", "@outlook.com"]
+
+        # Проверка на валидность email
+        if not any(email.endswith(domain) for domain in allowed_domains):
+            self.parent.show_error("Email должен быть адресом одного из допустимых доменов: " +
+                                   ", ".join(allowed_domains))
+            return
+
+        if not password:
+            self.parent.show_error("Поле 'Пароль' не может быть пустым")
+            return
+        if len(password) < 6:
+            self.parent.show_error("Пароль должен содержать минимум 6 символов")
+            return
+
+        if not confirm_password:
+            self.parent.show_error("Поле 'Подтверждение пароля' не может быть пустым")
             return
 
         if password != confirm_password:
@@ -185,4 +221,4 @@ class RegisterWidget(QWidget):
                 self.parent.show_success("Регистрация успешна")
                 self.parent.show_login()
             except Exception as e:
-                self.parent.show_error(f"Ошибка при регистрации: {str(e)}")
+                self.parent.show_error("Ошибка при регистрации: пользователь с таким именем уже занят")

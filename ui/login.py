@@ -4,6 +4,7 @@ from PyQt6.QtCore import Qt
 from database import SessionLocal
 import auth
 
+
 class LoginWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__()
