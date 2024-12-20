@@ -82,27 +82,59 @@ class Ticket(Base):
 
 def add_default_data():
     with SessionLocal() as db:
-        if not db.query(Train).first():
-            db.add(Train(
-                train_name="Ласточка",
-                total_seats=443,
-            ))
-            db.commit()
-
+        # Заполнение таблицы City
         if not db.query(City).first():
-            db.add(City(
-                name="Петербург",
-            ))
+            cities = [
+                City(name="Москва"),
+                City(name="Санкт-Петербург"),
+                City(name="Новосибирск"),
+                City(name="Екатеринбург"),
+                City(name="Казань"),
+                City(name="Нижний Новгород"),
+                City(name="Самара"),
+                City(name="Омск"),
+                City(name="Челябинск"),
+                City(name="Ростов-на-Дону")
+            ]
+            db.add_all(cities)
             db.commit()
 
+        # Заполнение таблицы Station
         if not db.query(Station).first():
-            city = db.query(City).first()
-            db.add(Station(
-                name_station="Москва",
-                city_id=city.id,
-            ))
+            cities = db.query(City).all()
+            stations = [
+                Station(name_station="Ленинградский вокзал", city_id=cities[0].id),
+                Station(name_station="Московский вокзал", city_id=cities[1].id),
+                Station(name_station="Новосибирский вокзал", city_id=cities[2].id),
+                Station(name_station="Екатеринбургский вокзал", city_id=cities[3].id),
+                Station(name_station="Казанский вокзал", city_id=cities[4].id),
+                Station(name_station="Нижегородский вокзал", city_id=cities[5].id),
+                Station(name_station="Самарский вокзал", city_id=cities[6].id),
+                Station(name_station="Омский вокзал", city_id=cities[7].id),
+                Station(name_station="Челябинский вокзал", city_id=cities[8].id),
+                Station(name_station="Ростовский вокзал", city_id=cities[9].id)
+            ]
+            db.add_all(stations)
             db.commit()
 
+        # Заполнение таблицы Train
+        if not db.query(Train).first():
+            trains = [
+                Train(train_name="Ласточка", total_seats=443),
+                Train(train_name="Сапсан", total_seats=350),
+                Train(train_name="Аэроэкспресс", total_seats=200),
+                Train(train_name="РЖД", total_seats=600),
+                Train(train_name="Стриж", total_seats=400),
+                Train(train_name="Ярославль", total_seats=250),
+                Train(train_name="Сибирь", total_seats=500),
+                Train(train_name="Транссибирский", total_seats=1000),
+                Train(train_name="Уральский экспресс", total_seats=300),
+                Train(train_name="Красная стрела", total_seats=450)
+            ]
+            db.add_all(trains)
+            db.commit()
+
+        # Проверка заполнения данных для администратора
         if not db.query(User).first():
             db.add(User(
                 username="admin",
